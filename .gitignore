@@ -1,0 +1,8 @@
+# build artifacts
+*.log
+node_modules/
+__pycache__/
+*.pyc
+target/
+bin/
+.env
