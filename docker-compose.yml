@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: linkly
+      POSTGRES_PASSWORD: linkly_pass
+      POSTGRES_DB: linkly
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U linkly"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+    depends_on:
+      - user-service
+      - link-service
+      - analytics-service
+
+  user-service:
+    build: ./services/user-service
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: "5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  link-service:
+    build: ./services/link-service
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  analytics-service:
+    build: ./services/analytics-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: "8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
