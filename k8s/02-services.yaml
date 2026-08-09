@@ -1,0 +1,175 @@
+# ==================== API GATEWAY (Go) ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: linkly
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+      - name: api-gateway
+        image: ghcr.io/alok2502/linkly-api-gateway:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: PORT
+          value: "8080"
+        resources:
+          requests: {memory: "32Mi", cpu: "50m"}
+          limits: {memory: "64Mi", cpu: "100m"}
+        readinessProbe:
+          httpGet: {path: /health, port: 8080}
+          initialDelaySeconds: 3
+        livenessProbe:
+          httpGet: {path: /health, port: 8080}
+          initialDelaySeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: linkly
+spec:
+  selector:
+    app: api-gateway
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+# ==================== USER SERVICE (Python) ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: linkly
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+      - name: user-service
+        image: ghcr.io/alok2502/linkly-user-service:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: PORT
+          value: "5000"
+        resources:
+          requests: {memory: "64Mi", cpu: "50m"}
+          limits: {memory: "128Mi", cpu: "100m"}
+        readinessProbe:
+          httpGet: {path: /health, port: 5000}
+          initialDelaySeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: linkly
+spec:
+  selector:
+    app: user-service
+  ports:
+  - port: 5000
+    targetPort: 5000
+---
+# ==================== LINK SERVICE (Node) ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: link-service
+  namespace: linkly
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: link-service
+  template:
+    metadata:
+      labels:
+        app: link-service
+    spec:
+      containers:
+      - name: link-service
+        image: ghcr.io/alok2502/linkly-link-service:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: PORT
+          value: "3000"
+        resources:
+          requests: {memory: "64Mi", cpu: "50m"}
+          limits: {memory: "128Mi", cpu: "100m"}
+        readinessProbe:
+          httpGet: {path: /health, port: 3000}
+          initialDelaySeconds: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: link-service
+  namespace: linkly
+spec:
+  selector:
+    app: link-service
+  ports:
+  - port: 3000
+    targetPort: 3000
+---
+# ==================== ANALYTICS SERVICE (Java) ====================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: analytics-service
+  namespace: linkly
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: analytics-service
+  template:
+    metadata:
+      labels:
+        app: analytics-service
+    spec:
+      containers:
+      - name: analytics-service
+        image: ghcr.io/alok2502/linkly-analytics-service:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SERVER_PORT
+          value: "8081"
+        resources:
+          requests: {memory: "256Mi", cpu: "100m"}
+          limits: {memory: "512Mi", cpu: "250m"}
+        readinessProbe:
+          httpGet: {path: /health, port: 8081}
+          initialDelaySeconds: 15
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: analytics-service
+  namespace: linkly
+spec:
+  selector:
+    app: analytics-service
+  ports:
+  - port: 8081
+    targetPort: 8081
